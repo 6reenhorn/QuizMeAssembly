@@ -60,7 +60,7 @@
     out_of:         .asciiz " out of "
     
     # Input prompts
-    answer_prompt:  .asciiz "Your answer (A/B/C/D): "
+    answer_prompt:  .asciiz "Your answer (A|B|C|D): "
     continue_prompt: .asciiz "Press Enter to continue...\n"
     
     # Game over messages
