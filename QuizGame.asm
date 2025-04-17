@@ -1,11 +1,8 @@
-# Interactive Quiz Game with Adaptive Difficulty
-# MIPS Assembly for MARS Simulator
-
 .data
     # Welcome messages
-    welcome:        .asciiz "\n\n===== WELCOME TO THE INTERACTIVE QUIZ GAME =====\n\n"
-    instructions:   .asciiz "Answer multiple-choice questions by entering A, B, C, or D.\n"
-    instructions2:  .asciiz "The difficulty will adapt based on your performance!\n\n"
+    welcome:        .asciiz "\n\n===== WELCOME TO QuizMeAssembly AN INTERACTIVE QUIZ GAME =====\n\n"
+    instructions:   .asciiz "==== Answer multiple-choice questions by entering A, B, C, or D.\n"
+    instructions2:  .asciiz "==== The difficulty will adapt based on your performance!\n\n"
     start_prompt:   .asciiz "Press Enter to begin the quiz...\n"
     
     # Question difficulty levels
