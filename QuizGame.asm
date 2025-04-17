@@ -307,7 +307,7 @@ correct_answer:
     sw $t7, difficulty
     
 skip_difficulty_increase:
-    # Continue to display score
+    j display_score
     
 display_score:
     # Show current score
