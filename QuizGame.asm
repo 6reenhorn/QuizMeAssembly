@@ -52,31 +52,87 @@
     easy_q10_ans: .byte 'B'
     
     # Questions - Medium Level
-    medium_q1:      .asciiz "In which year did World War II end?\n"
-    medium_q1_a:    .asciiz "A. 1943\nB. 1944\nC. 1945\nD. 1946\n"
-    medium_q1_ans:  .byte 'C'
-    
-    medium_q2:      .asciiz "What is the chemical symbol for gold?\n"
-    medium_q2_a:    .asciiz "A. Go\nB. Au\nC. Ag\nD. Gd\n"
-    medium_q2_ans:  .byte 'B'
-    
-    medium_q3:      .asciiz "What is the square root of 144?\n"
-    medium_q3_a:    .asciiz "A. 12\nB. 14\nC. 10\nD. 16\n"
-    medium_q3_ans:  .byte 'A'
+    medium_q1:    .asciiz "Who is considered the father of the C programming language?\n"
+    medium_q1_a:  .asciiz "A. Bill Gates\nB. Dennis Ritchie\nC. James Gosling\nD. Linus Torvalds\n"
+    medium_q1_ans: .byte 'B'
+
+    medium_q2:    .asciiz "Which data structure uses FIFO order?\n"
+    medium_q2_a:  .asciiz "A. Stack\nB. Queue\nC. Tree\nD. Array\n"
+    medium_q2_ans: .byte 'B'
+
+    medium_q3:    .asciiz "Which keyword is used to define a function in Python?\n"
+    medium_q3_a:  .asciiz "A. function\nB. define\nC. def\nD. func\n"
+    medium_q3_ans: .byte 'C'
+
+    medium_q4:    .asciiz "Which sorting algorithm is the fastest in the average case?\n"
+    medium_q4_a:  .asciiz "A. Bubble Sort\nB. Insertion Sort\nC. Selection Sort\nD. Merge Sort\n"
+    medium_q4_ans: .byte 'D'
+
+    medium_q5:    .asciiz "Which of these is a type of database?\n"
+    medium_q5_a:  .asciiz "A. Google\nB. MySQL\nC. Firebase Hosting\nD. Dropbox\n"
+    medium_q5_ans: .byte 'B'
+
+    medium_q6:    .asciiz "What does API stand for?\n"
+    medium_q6_a:  .asciiz "A. Application Programming Interface\nB. Advanced Programming Input\nC. Algorithm Performance Index\nD. Application Process Integration\n"
+    medium_q6_ans: .byte 'A'
+
+    medium_q7:    .asciiz "What is the value of '5 % 2' in most programming languages?\n"
+    medium_q7_a:  .asciiz "A. 2\nB. 3\nC. 1\nD. 0\n"
+    medium_q7_ans: .byte 'C'
+
+    medium_q8:    .asciiz "Which protocol is used to transfer web pages?\n"
+    medium_q8_a:  .asciiz "A. FTP\nB. SMTP\nC. HTTP\nD. SSH\n"
+    medium_q8_ans: .byte 'C'
+
+    medium_q9:    .asciiz "Which language is mainly used for Android development?\n"
+    medium_q9_a:  .asciiz "A. Python\nB. Java\nC. C++\nD. Swift\n"
+    medium_q9_ans: .byte 'B'
+
+    medium_q10:    .asciiz "What is a 'bug' in programming?\n"
+    medium_q10_a:  .asciiz "A. A virus\nB. A logical error\nC. An optimization\nD. A feature\n"
+    medium_q10_ans: .byte 'B'
     
     # Questions - Hard Level
-    hard_q1:        .asciiz "Which of these is NOT a fundamental force of nature?\n"
-    hard_q1_a:      .asciiz "A. Gravity\nB. Electromagnetic force\nC. Nuclear force\nD. Centrifugal force\n"
-    hard_q1_ans:    .byte 'D'
-    
-    hard_q2:        .asciiz "In binary, what is 1011 + 0110?\n"
-    hard_q2_a:      .asciiz "A. 10001\nB. 10101\nC. 100011\nD. 10111\n"
-    hard_q2_ans:    .byte 'A'
-    
-    hard_q3:        .asciiz "Which algorithm has the worst time complexity?\n"
-    hard_q3_a:      .asciiz "A. Merge Sort O(n log n)\nB. Binary Search O(log n)\nC. Bubble Sort O(n²)\nD. Linear Search O(n)\n"
-    hard_q3_ans:    .byte 'C'
-    
+    hard_q1:    .asciiz "Which algorithm is used in shortest path finding?\n"
+    hard_q1_a:  .asciiz "A. Dijkstra’s Algorithm\nB. Quick Sort\nC. DFS\nD. Binary Search\n"
+    hard_q1_ans: .byte 'A'
+
+    hard_q2:    .asciiz "What is the time complexity of Binary Search?\n"
+    hard_q2_a:  .asciiz "A. O(n)\nB. O(log n)\nC. O(n^2)\nD. O(1)\n"
+    hard_q2_ans: .byte 'B'
+
+    hard_q3:    .asciiz "Which of the following is NOT a type of software testing?\n"
+    hard_q3_a:  .asciiz "A. Unit Testing\nB. Stress Testing\nC. Box Testing\nD. Integration Testing\n"
+    hard_q3_ans: .byte 'C'
+
+    hard_q4:    .asciiz "Which of these has the fastest growth rate in Big O notation?\n"
+    hard_q4_a:  .asciiz "A. O(log n)\nB. O(n)\nC. O(n log n)\nD. O(2^n)\n"
+    hard_q4_ans: .byte 'D'
+
+    hard_q5:    .asciiz "Which register holds the return address in MIPS?\n"
+    hard_q5_a:  .asciiz "A. $a0\nB. $t0\nC. $ra\nD. $sp\n"
+    hard_q5_ans: .byte 'C'
+
+    hard_q6:    .asciiz "What does the 'stack' follow?\n"
+    hard_q6_a:  .asciiz "A. FIFO\nB. FILO\nC. LIFO\nD. LILO\n"
+    hard_q6_ans: .byte 'C'
+
+    hard_q7:    .asciiz "Which computer scientist proposed the Turing Test?\n"
+    hard_q7_a:  .asciiz "A. Tim Berners-Lee\nB. Alan Turing\nC. Charles Babbage\nD. Ada Lovelace\n"
+    hard_q7_ans: .byte 'B'
+
+    hard_q8:    .asciiz "Which number is the binary equivalent of decimal 13?\n"
+    hard_q8_a:  .asciiz "A. 1101\nB. 1011\nC. 1110\nD. 1001\n"
+    hard_q8_ans: .byte 'A'
+
+    hard_q9:    .asciiz "What is the output of left shifting 0001 by 2 bits?\n"
+    hard_q9_a:  .asciiz "A. 0100\nB. 0010\nC. 1000\nD. 0000\n"
+    hard_q9_ans: .byte 'C'
+
+    hard_q10:    .asciiz "Which of the following is not a valid MIPS instruction?\n"
+    hard_q10_a:  .asciiz "A. addi\nB. sub\nC. jumpif\nD. lw\n"
+    hard_q10_ans: .byte 'C'
+
     # Responses
     correct:        .asciiz "\nCorrect! Great job!\n\n"
     incorrect:      .asciiz "\nIncorrect. The correct answer is: "
