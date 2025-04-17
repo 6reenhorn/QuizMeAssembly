@@ -11,17 +11,45 @@
     hard_text:      .asciiz "[HARD] "
     
     # Questions - Easy Level
-    easy_q1:        .asciiz "What is the capital of France?\n"
-    easy_q1_a:      .asciiz "A. London\nB. Paris\nC. Rome\nD. Berlin\n"
-    easy_q1_ans:    .byte 'B'
-    
-    easy_q2:        .asciiz "Which planet is closest to the Sun?\n"
-    easy_q2_a:      .asciiz "A. Venus\nB. Earth\nC. Mercury\nD. Mars\n"
-    easy_q2_ans:    .byte 'C'
-    
-    easy_q3:        .asciiz "What is 2 + 2?\n"
-    easy_q3_a:      .asciiz "A. 3\nB. 4\nC. 5\nD. 6\n"
-    easy_q3_ans:    .byte 'B'
+    easy_q1:    .asciiz "What does 'CPU' stand for?\n"
+    easy_q1_a:  .asciiz "A. Central Processing Unit\nB. Computer Personal Unit\nC. Control Panel Unit\nD. Central Print Unit\n"
+    easy_q1_ans: .byte 'A'
+
+    easy_q2:    .asciiz "What is the result of 2 * 3 + 1 in most programming languages?\n"
+    easy_q2_a:  .asciiz "A. 9\nB. 7\nC. 8\nD. 5\n"
+    easy_q2_ans: .byte 'B'
+
+    easy_q3:    .asciiz "What does HTML stand for?\n"
+    easy_q3_a:  .asciiz "A. HyperText Markdown Language\nB. Hyperlink and Text Markup Language\nC. HyperText Markup Language\nD. HighText Machine Language\n"
+    easy_q3_ans: .byte 'C'
+
+    easy_q4:    .asciiz "Which of the following is a programming language?\n"
+    easy_q4_a:  .asciiz "A. Python\nB. Eagle\nC. Lotus\nD. Falcon\n"
+    easy_q4_ans: .byte 'A'
+
+    easy_q5:    .asciiz "Which of these is used to store multiple values in Python?\n"
+    easy_q5_a:  .asciiz "A. Integer\nB. List\nC. String\nD. Float\n"
+    easy_q5_ans: .byte 'B'
+
+    easy_q6:    .asciiz "Which symbol is used for comments in Python?\n"
+    easy_q6_a:  .asciiz "A. //\nB. #\nC. <!-- -->\nD. ;\n"
+    easy_q6_ans: .byte 'B'
+
+    easy_q7:    .asciiz "Which of the following is **not** a logic gate?\n"
+    easy_q7_a:  .asciiz "A. AND\nB. OR\nC. NOT\nD. END\n"
+    easy_q7_ans: .byte 'D'
+
+    easy_q8:    .asciiz "What base is the binary number system?\n"
+    easy_q8_a:  .asciiz "A. Base 10\nB. Base 8\nC. Base 2\nD. Base 16\n"
+    easy_q8_ans: .byte 'C'
+
+    easy_q9:    .asciiz "Which one is a valid loop keyword in C?\n"
+    easy_q9_a:  .asciiz "A. loop\nB. for\nC. iterate\nD. repeat\n"
+    easy_q9_ans: .byte 'B'
+
+    easy_q10:    .asciiz "What file extension is typically used for C++ source files?\n"
+    easy_q10_a:  .asciiz "A. .txt\nB. .cpp\nC. .java\nD. .exe\n"
+    easy_q10_ans: .byte 'B'
     
     # Questions - Medium Level
     medium_q1:      .asciiz "In which year did World War II end?\n"
@@ -42,7 +70,7 @@
     hard_q1_ans:    .byte 'D'
     
     hard_q2:        .asciiz "In binary, what is 1011 + 0110?\n"
-    hard_q2_a:      .asciiz "A. 10001\nB. 10101\nC. 10001\nD. 10111\n"
+    hard_q2_a:      .asciiz "A. 10001\nB. 10101\nC. 100011\nD. 10111\n"
     hard_q2_ans:    .byte 'A'
     
     hard_q3:        .asciiz "Which algorithm has the worst time complexity?\n"
