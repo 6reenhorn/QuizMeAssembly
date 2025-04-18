@@ -186,8 +186,8 @@ main:
     syscall
     
     # Initialize game
-    li $t0, 0              # Question counter
-    li $t1, 15              # Total questions to ask
+    li $t0, 1              # Question counter
+    li $t1, 16              # Total questions to ask
     sw $t0, total_questions
     
 game_loop:
@@ -215,26 +215,26 @@ easy_question:
     syscall
     
     # Select a question based on question counter modulo 3
-    li $t3, 10
+    li $t3, 11
     rem $t4, $t0, $t3      
     
-    beq $t4, 0, easy_q1_display
-    beq $t4, 1, easy_q2_display
-    beq $t4, 2, easy_q3_display
-    beq $t4, 3, easy_q4_display
-    beq $t4, 4, easy_q5_display
-    beq $t4, 5, easy_q6_display
-    beq $t4, 6, easy_q7_display
-    beq $t4, 7, easy_q8_display
-    beq $t4, 8, easy_q9_display
-    beq $t4, 9, easy_q10_display
+    beq $t4, 1, easy_q1_display
+    beq $t4, 2, easy_q2_display
+    beq $t4, 3, easy_q3_display
+    beq $t4, 4, easy_q4_display
+    beq $t4, 5, easy_q5_display
+    beq $t4, 6, easy_q6_display
+    beq $t4, 7, easy_q7_display
+    beq $t4, 8, easy_q8_display
+    beq $t4, 9, easy_q9_display
+    beq $t4, 10, easy_q10_display
     
 easy_q1_display:
     la $a0, easy_q1
     syscall
     la $a0, easy_q1_a
     syscall
-    lb $t5, easy_q1_ans    # Load correct answer into $t5
+    lb $t5, easy_q1_ans    
     j get_answer
     
 easy_q2_display:
