@@ -187,7 +187,7 @@ main:
     
     # Initialize game
     li $t0, 0              # Question counter
-    li $t1, 6              # Total questions to ask
+    li $t1, 15              # Total questions to ask
     sw $t0, total_questions
     
 game_loop:
