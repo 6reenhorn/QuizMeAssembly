@@ -193,11 +193,7 @@ main:
 game_loop:
     # Check if we've asked all questions
     lw $t0, total_questions
-    beq $t0, $t1, end_game
-    
-    # Increase question counter
-    addi $t0, $t0, 1
-    sw $t0, total_questions
+    beq $t0, $t1, end_game  
     
     # Get current difficulty
     lw $t2, difficulty
@@ -219,12 +215,19 @@ easy_question:
     syscall
     
     # Select a question based on question counter modulo 3
-    li $t3, 3
-    rem $t4, $t0, $t3      # $t4 = $t0 % 3
+    li $t3, 10
+    rem $t4, $t0, $t3      
     
-    beq $t4, 1, easy_q1_display
-    beq $t4, 2, easy_q2_display
-    beq $t4, 0, easy_q3_display
+    beq $t4, 0, easy_q1_display
+    beq $t4, 1, easy_q2_display
+    beq $t4, 2, easy_q3_display
+    beq $t4, 3, easy_q4_display
+    beq $t4, 4, easy_q5_display
+    beq $t4, 5, easy_q6_display
+    beq $t4, 6, easy_q7_display
+    beq $t4, 7, easy_q8_display
+    beq $t4, 8, easy_q9_display
+    beq $t4, 9, easy_q10_display
     
 easy_q1_display:
     la $a0, easy_q1
@@ -248,6 +251,62 @@ easy_q3_display:
     la $a0, easy_q3_a
     syscall
     lb $t5, easy_q3_ans
+    j get_answer
+    
+easy_q4_display:
+    la $a0, easy_q4
+    syscall
+    la $a0, easy_q4_a
+    syscall
+    lb $t5, easy_q4_ans
+    j get_answer
+
+easy_q5_display:
+    la $a0, easy_q5
+    syscall
+    la $a0, easy_q5_a
+    syscall
+    lb $t5, easy_q5_ans
+    j get_answer
+
+easy_q6_display:
+    la $a0, easy_q6
+    syscall
+    la $a0, easy_q6_a
+    syscall
+    lb $t5, easy_q6_ans
+    j get_answer
+
+easy_q7_display:
+    la $a0, easy_q7
+    syscall
+    la $a0, easy_q7_a
+    syscall
+    lb $t5, easy_q7_ans
+    j get_answer
+
+easy_q8_display:
+    la $a0, easy_q8
+    syscall
+    la $a0, easy_q8_a
+    syscall
+    lb $t5, easy_q8_ans
+    j get_answer
+
+easy_q9_display:
+    la $a0, easy_q9
+    syscall
+    la $a0, easy_q9_a
+    syscall
+    lb $t5, easy_q9_ans
+    j get_answer
+
+easy_q10_display:
+    la $a0, easy_q10
+    syscall
+    la $a0, easy_q10_a
+    syscall
+    lb $t5, easy_q10_ans
     j get_answer
     
 medium_question:
@@ -425,6 +484,10 @@ display_score:
     la $a0, input_buffer
     li $a1, 5
     syscall
+    
+    lw $t0, total_questions
+    addi $t0, $t0, 1
+    sw $t0, total_questions
     
     # Jump back to game loop
     j game_loop
