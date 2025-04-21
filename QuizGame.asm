@@ -315,12 +315,19 @@ medium_question:
     syscall
     
     # Select a question based on question counter modulo 3
-    li $t3, 3
+    li $t3, 11
     rem $t4, $t0, $t3
     
     beq $t4, 1, medium_q1_display
     beq $t4, 2, medium_q2_display
-    beq $t4, 0, medium_q3_display
+    beq $t4, 3, medium_q3_display
+    beq $t4, 4, medium_q4_display
+    beq $t4, 5, medium_q5_display
+    beq $t4, 6, medium_q6_display
+    beq $t4, 7, medium_q7_display
+    beq $t4, 8, medium_q8_display
+    beq $t4, 9, medium_q9_display
+    beq $t4, 10, medium_q10_display
     
 medium_q1_display:
     la $a0, medium_q1
@@ -346,18 +353,81 @@ medium_q3_display:
     lb $t5, medium_q3_ans
     j get_answer
     
+medium_q4_display:
+    la $a0, medium_q4
+    syscall
+    la $a0, medium_q4_a
+    syscall
+    lb $t5, medium_q4_ans
+    j get_answer
+
+medium_q5_display:
+    la $a0, medium_q5
+    syscall
+    la $a0, medium_q5_a
+    syscall
+    lb $t5, medium_q5_ans
+    j get_answer
+    
+medium_q6_display:
+    la $a0, medium_q6
+    syscall
+    la $a0, medium_q6_a
+    syscall
+    lb $t5, medium_q6_ans
+    j get_answer
+    
+medium_q7_display:
+    la $a0, medium_q7
+    syscall
+    la $a0, medium_q7_a
+    syscall
+    lb $t5, medium_q7_ans
+    j get_answer
+    
+medium_q8_display:
+    la $a0, medium_q8
+    syscall
+    la $a0, medium_q8_a
+    syscall
+    lb $t5, medium_q8_ans
+    j get_answer
+    
+medium_q9_display:
+    la $a0, medium_q9
+    syscall
+    la $a0, medium_q9_a
+    syscall
+    lb $t5, medium_q9_ans
+    j get_answer
+    
+medium_q10_display:
+    la $a0, medium_q10
+    syscall
+    la $a0, medium_q10_a
+    syscall
+    lb $t5, medium_q10_ans
+    j get_answer
+    
 hard_question:
     # Display difficulty indicator
     la $a0, hard_text
     syscall
     
     # Select a question based on question counter modulo 3
-    li $t3, 3
+    li $t3, 11
     rem $t4, $t0, $t3
     
     beq $t4, 1, hard_q1_display
     beq $t4, 2, hard_q2_display
-    beq $t4, 0, hard_q3_display
+    beq $t4, 3, hard_q3_display
+    beq $t4, 4, hard_q4_display
+    beq $t4, 5, hard_q5_display
+    beq $t4, 6, hard_q6_display
+    beq $t4, 7, hard_q7_display
+    beq $t4, 8, hard_q8_display
+    beq $t4, 9, hard_q9_display
+    beq $t4, 10, hard_q10_display
     
 hard_q1_display:
     la $a0, hard_q1
@@ -381,6 +451,62 @@ hard_q3_display:
     la $a0, hard_q3_a
     syscall
     lb $t5, hard_q3_ans
+    j get_answer
+    
+hard_q4_display:
+    la $a0, hard_q4
+    syscall
+    la $a0, hard_q4_a
+    syscall
+    lb $t5, hard_q4_ans
+    j get_answer
+    
+hard_q5_display:
+    la $a0, hard_q5
+    syscall
+    la $a0, hard_q5_a
+    syscall
+    lb $t5, hard_q5_ans
+    j get_answer
+    
+hard_q6_display:
+    la $a0, hard_q6
+    syscall
+    la $a0, hard_q6_a
+    syscall
+    lb $t5, hard_q6_ans
+    j get_answer
+    
+hard_q7_display:
+    la $a0, hard_q7
+    syscall
+    la $a0, hard_q7_a
+    syscall
+    lb $t5, hard_q7_ans
+    j get_answer
+    
+hard_q8_display:
+    la $a0, hard_q8
+    syscall
+    la $a0, hard_q8_a
+    syscall
+    lb $t5, hard_q8_ans
+    j get_answer
+
+hard_q9_display:
+    la $a0, hard_q9
+    syscall
+    la $a0, hard_q9_a
+    syscall
+    lb $t5, hard_q9_ans
+    j get_answer
+    
+hard_q10_display:
+    la $a0, hard_q10
+    syscall
+    la $a0, hard_q10_a
+    syscall
+    lb $t5, hard_q10_ans
     j get_answer
     
 get_answer:
