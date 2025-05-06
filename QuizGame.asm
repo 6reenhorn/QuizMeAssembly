@@ -94,7 +94,7 @@
     
     # Questions - Hard Level
     hard_q1:    .asciiz "Which algorithm is used in shortest path finding?\n"
-    hard_q1_a:  .asciiz "A. Dijkstra’s Algorithm\nB. Quick Sort\nC. DFS\nD. Binary Search\n"
+    hard_q1_a:  .asciiz "A. Dijkstra's Algorithm\nB. Quick Sort\nC. DFS\nD. Binary Search\n"
     hard_q1_ans: .byte 'A'
 
     hard_q2:    .asciiz "What is the time complexity of Binary Search?\n"
@@ -162,6 +162,7 @@
     difficulty:     .word 1       # 1=easy, 2=medium, 3=hard
     current_score:  .word 0
     total_questions: .word 0
+    max_questions:  .word 15      # Fixed to 15 questions total
 
 .text
 main:
@@ -186,14 +187,19 @@ main:
     syscall
     
     # Initialize game
-    li $t0, 1              # Question counter
-    li $t1, 16              # Total questions to ask
+    li $t0, 0              # Question counter starts at 0
     sw $t0, total_questions
+    lw $t1, max_questions  # Total questions to ask
     
 game_loop:
     # Check if we've asked all questions
     lw $t0, total_questions
-    beq $t0, $t1, end_game  
+    lw $t1, max_questions
+    bge $t0, $t1, end_game  # Changed to >= for clearer logic
+    
+    # Increment the question counter before asking the question
+    addi $t0, $t0, 1
+    sw $t0, total_questions
     
     # Get current difficulty
     lw $t2, difficulty
@@ -214,7 +220,7 @@ easy_question:
     la $a0, easy_text
     syscall
     
-    # Select a question based on question counter modulo 3
+    # Select a question based on question counter modulo 11 (to handle all 10 questions + case 0)
     li $t3, 11
     rem $t4, $t0, $t3      
     
@@ -228,6 +234,9 @@ easy_question:
     beq $t4, 8, easy_q8_display
     beq $t4, 9, easy_q9_display
     beq $t4, 10, easy_q10_display
+    
+    # Default to first question if modulo result is 0
+    j easy_q1_display
     
 easy_q1_display:
     la $a0, easy_q1
@@ -314,7 +323,7 @@ medium_question:
     la $a0, medium_text
     syscall
     
-    # Select a question based on question counter modulo 3
+    # Select a question based on question counter modulo 11
     li $t3, 11
     rem $t4, $t0, $t3
     
@@ -328,6 +337,9 @@ medium_question:
     beq $t4, 8, medium_q8_display
     beq $t4, 9, medium_q9_display
     beq $t4, 10, medium_q10_display
+    
+    # Default to first question if modulo result is 0
+    j medium_q1_display
     
 medium_q1_display:
     la $a0, medium_q1
@@ -414,7 +426,7 @@ hard_question:
     la $a0, hard_text
     syscall
     
-    # Select a question based on question counter modulo 3
+    # Select a question based on question counter modulo 11
     li $t3, 11
     rem $t4, $t0, $t3
     
@@ -428,6 +440,9 @@ hard_question:
     beq $t4, 8, hard_q8_display
     beq $t4, 9, hard_q9_display
     beq $t4, 10, hard_q10_display
+    
+    # Default to first question if modulo result is 0
+    j hard_q1_display
     
 hard_q1_display:
     la $a0, hard_q1
@@ -611,11 +626,7 @@ display_score:
     li $a1, 5
     syscall
     
-    lw $t0, total_questions
-    addi $t0, $t0, 1
-    sw $t0, total_questions
-    
-    # Jump back to game loop
+    # Continue to the next question (no increment here anymore)
     j game_loop
     
 end_game:
@@ -637,7 +648,7 @@ end_game:
     syscall
     
     li $v0, 1
-    lw $a0, total_questions
+    lw $a0, max_questions  # Use max_questions instead of total_questions
     syscall
     
     li $v0, 4
@@ -650,7 +661,7 @@ end_game:
     
     # Calculate performance percentage
     lw $t0, current_score
-    lw $t1, total_questions
+    lw $t1, max_questions  # Use max_questions instead of total_questions
     
     # Avoid division by zero
     beqz $t1, exit_program
