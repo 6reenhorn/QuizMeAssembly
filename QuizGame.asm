@@ -2,8 +2,8 @@
     # Welcome messages
     welcome:        .asciiz "\n\n===== WELCOME TO QuizMeAssembly AN INTERACTIVE QUIZ GAME =====\n\n"
     instructions:   .asciiz "-> Answer multiple-choice questions by entering | A | B | C | D |.\n"
-    instructions2:  .asciiz "-> The difficulty will adapt based on your performance!\n"
-    instructions3:  .asciiz "-> Questions will be randomly selected for a unique experience each time!\n\n"
+    instructions2:  .asciiz "-> You will be asked 15 randomly selected questions.\n"
+    instructions3:  .asciiz "-> Each question will appear only once!\n\n"
     start_prompt:   .asciiz "Press Enter to begin the quiz...\n"
     
     # Question difficulty levels
@@ -143,6 +143,8 @@
     score_msg_display: .asciiz "\nYour current score: "
     final_score_msg: .asciiz "\n===== FINAL SCORE: "
     out_of_msg:      .asciiz " out of "
+    question_count_msg: .asciiz "\nQuestion "
+    of_msg:          .asciiz " of 15\n"
     
     # Input prompts
     answer_prompt:  .asciiz "Your answer (A|B|C|D): "
@@ -160,21 +162,33 @@
     input_buffer:   .space 5
     
     # Game state variables
-    difficulty_level: .word 1       # 1=easy, 2=medium, 3=hard
     current_score:  .word 0
     total_questions: .word 0
     max_questions:  .word 15      # Fixed to 15 questions total
     
     # For randomization
     seed:           .word 0       # Seed for the random number generator
-    questions_used: .space 40     # Track which questions have been used (10 questions per level * 4 levels)
+    questions_used: .space 30     # Track which questions have been used (30 questions total)
     random_value:   .word 0       # Store random number
     
     # Constants for randomization
-    const_a:        .word 1103515245  # Multiplicative constant for LCG
-    const_c:        .word 12345       # Additive constant for LCG
-    const_m:        .word 65536       # Modulus for LCG (2^16)
-    max_questions_per_level: .word 10 # Number of questions per difficulty level
+    const_a:        .word 1664525     # Better multiplicative constant for LCG
+    const_c:        .word 1013904223  # Better additive constant for LCG
+    const_m:        .word 4294967296  # Modulus for LCG (2^32)
+    total_question_count: .word 30    # Total number of questions in the pool
+    
+    # Question address tables for improved lookup
+    question_table:     .word easy_q1, easy_q2, easy_q3, easy_q4, easy_q5, easy_q6, easy_q7, easy_q8, easy_q9, easy_q10,
+                             medium_q1, medium_q2, medium_q3, medium_q4, medium_q5, medium_q6, medium_q7, medium_q8, medium_q9, medium_q10,
+                             hard_q1, hard_q2, hard_q3, hard_q4, hard_q5, hard_q6, hard_q7, hard_q8, hard_q9, hard_q10
+    
+    question_options:   .word easy_q1_a, easy_q2_a, easy_q3_a, easy_q4_a, easy_q5_a, easy_q6_a, easy_q7_a, easy_q8_a, easy_q9_a, easy_q10_a,
+                             medium_q1_a, medium_q2_a, medium_q3_a, medium_q4_a, medium_q5_a, medium_q6_a, medium_q7_a, medium_q8_a, medium_q9_a, medium_q10_a,
+                             hard_q1_a, hard_q2_a, hard_q3_a, hard_q4_a, hard_q5_a, hard_q6_a, hard_q7_a, hard_q8_a, hard_q9_a, hard_q10_a
+                             
+    question_answers:   .byte 'A', 'B', 'C', 'A', 'B', 'B', 'D', 'C', 'B', 'B',
+                             'B', 'B', 'C', 'D', 'B', 'A', 'C', 'C', 'B', 'B',
+                             'A', 'B', 'C', 'D', 'C', 'C', 'B', 'A', 'C', 'C'
 
 .text
 main:
@@ -184,9 +198,57 @@ main:
     sw $a0, seed        # Save as our seed
     
     # Initialize questions_used array to all zeros (not used)
+    jal init_questions_array
+    
+    # Display welcome message and instructions
+    jal display_welcome
+    
+    # Wait for user to press Enter
+    jal wait_for_enter
+    
+    # Initialize game
+    li $t0, 0              # Question counter starts at 0
+    sw $t0, total_questions
+    sw $zero, current_score  # Reset score to 0
+    
+game_loop:
+    # Check if we've asked all questions
+    lw $t0, total_questions
+    lw $t1, max_questions
+    bge $t0, $t1, end_game
+    
+    # Increment the question counter before asking the question
+    addi $t0, $t0, 1
+    sw $t0, total_questions
+    
+    # Show question progress
+    jal display_question_progress
+    
+    # Get a random unasked question
+    jal get_random_question    # Returns question ID in $v1
+    move $s0, $v1              # Save question ID (1-30) to $s0
+    
+    # Display the question based on ID
+    jal display_question       # $s0 is input (question ID)
+                               # $s1 will be output (correct answer)
+    
+    # Get user answer and check it
+    jal get_and_check_answer
+    
+    # After question handling, show score and continue
+    jal display_current_score
+    jal wait_for_enter
+    
+    # Go back to main game loop
+    j game_loop
+    
+#----------------------------------------
+# Initialize questions_used array to zeros
+#----------------------------------------
+init_questions_array:
     la $t0, questions_used
     li $t1, 0          # Counter
-    li $t2, 40         # Total elements (10 questions * 4 difficulty levels)
+    li $t2, 30         # Total elements (30 questions in pool)
     
 init_array_loop:
     beq $t1, $t2, init_array_done
@@ -196,7 +258,12 @@ init_array_loop:
     j init_array_loop
     
 init_array_done:
-    # Display welcome message
+    jr $ra
+
+#----------------------------------------
+# Display welcome message and instructions
+#----------------------------------------
+display_welcome:
     li $v0, 4
     la $a0, welcome
     syscall
@@ -212,435 +279,196 @@ init_array_done:
     
     la $a0, start_prompt
     syscall
-    
-    # Wait for user to press Enter
+    jr $ra
+
+#----------------------------------------
+# Wait for user to press Enter
+#----------------------------------------
+wait_for_enter:
     li $v0, 8
     la $a0, input_buffer
     li $a1, 5
     syscall
-    
-    # Initialize game
-    li $t0, 0              # Question counter starts at 0
-    sw $t0, total_questions
-    lw $t1, max_questions  # Total questions to ask
-    
-game_loop:
-    # Check if we've asked all questions
-    lw $t0, total_questions
-    lw $t1, max_questions
-    bge $t0, $t1, end_game
-    
-    # Increment the question counter before asking the question
-    addi $t0, $t0, 1
-    sw $t0, total_questions
-    
-    # Get current difficulty
-    lw $t2, difficulty_level
-    
-    # Select question based on difficulty
+    jr $ra
+
+#----------------------------------------
+# Display question progress (Question X of 15)
+#----------------------------------------
+display_question_progress:
     li $v0, 4
+    la $a0, question_count_msg
+    syscall
     
-    # Branch based on difficulty
-    beq $t2, 1, easy_question
-    beq $t2, 2, medium_question
-    beq $t2, 3, hard_question
+    li $v0, 1
+    lw $a0, total_questions
+    syscall
     
-    # Default to easy if something went wrong
-    j easy_question
+    li $v0, 4
+    la $a0, of_msg
+    syscall
+    jr $ra
+
+#----------------------------------------
+# Generate a random number and return an unused question ID
+#----------------------------------------
+get_random_question:
+    # Save return address since we might call this function recursively
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
     
-# Generate a random number between 1 and 10 (inclusive)
+    # Check if all questions have been used already
+    jal check_all_questions_used
+    
+    beq $v0, 1, reset_all_questions  # If all used (v0=1), reset them
+    j generate_random
+    
+reset_all_questions:
+    # This is a failsafe and shouldn't happen with 30 questions and 15 quiz length
+    la $t0, questions_used
+    li $t1, 0
+    li $t2, 30
+    
+reset_questions_loop:
+    beq $t1, $t2, generate_random
+    sb $zero, 0($t0)   # Mark as unused
+    addi $t0, $t0, 1
+    addi $t1, $t1, 1
+    j reset_questions_loop
+    
 generate_random:
-    # Linear Congruential Generator (LCG): X_next = (a * X + c) % m
+    # Improved LCG algorithm: X_next = (a * X + c) % m
+    # Using better constants for improved randomness
     lw $t0, seed        # Load current seed
     lw $t1, const_a     # Load a
     lw $t2, const_c     # Load c
     
-    mul $t0, $t0, $t1   # a * X
-    add $t0, $t0, $t2   # a * X + c
-    lw $t3, const_m
-    rem $t0, $t0, $t3   # (a * X + c) % m
+    multu $t0, $t1      # a * X
+    mflo $t0            # Get lower 32 bits of product
+    addu $t0, $t0, $t2  # a * X + c
+    # No need for explicit modulo with 2^32, it happens automatically
     
     sw $t0, seed        # Save new seed
     
-    # Get a number between 1 and 10
-    rem $t0, $t0, 10    # Mod 10 (0-9)
-    addi $t0, $t0, 1    # Add 1 to get 1-10
+    # Get a number between 1 and 30
+    # We'll use division to keep it in range
+    lw $t1, total_question_count
+    divu $t0, $t1
+    mfhi $t0            # Remainder (0-29)
+    addi $t0, $t0, 1    # Add 1 to get 1-30
     
     # Check if this question has been used
-    # Calculate index in questions_used array based on difficulty level
-    lw $t1, difficulty_level     # Current difficulty (1-3)
-    subi $t1, $t1, 1       # Convert to 0-indexed (0-2)
-    mul $t1, $t1, 10       # Each difficulty has 10 questions (0, 10, 20)
-    add $t1, $t1, $t0      # Add the question number (1-10)
-    subi $t1, $t1, 1       # Convert question number to 0-indexed
+    la $t1, questions_used
+    addi $t2, $t0, -1    # Question number - 1
+    add $t1, $t1, $t2    # Calculate address
+    lb $t3, 0($t1)       # Load used flag
     
-    la $t2, questions_used # Base address of array
-    add $t2, $t2, $t1      # Add offset to get to the specific question flag
-    lb $t3, 0($t2)         # Load the flag (0 = not used, 1 = used)
-    
-    # If question already used, try again
-    beq $t3, 1, generate_random
+    # If already used, try again with recursion
+    beq $t3, 1, try_another_question
     
     # Mark question as used
     li $t3, 1
-    sb $t3, 0($t2)
+    sb $t3, 0($t1)
     
-    # Store random value
-    sw $t0, random_value
+    # Return selected question ID in $v1
+    move $v1, $t0
     
-    # Check if all questions for this difficulty have been used
-    # If so, reset the questions_used array for this difficulty
-    lw $t1, difficulty_level     # Current difficulty (1-3)
-    subi $t1, $t1, 1       # Convert to 0-indexed (0-2)
-    mul $t1, $t1, 10       # Each difficulty has 10 questions (0, 10, 20)
-    
-    li $t3, 0              # Counter for used questions
-    li $t4, 0              # Loop counter
-    la $t5, questions_used # Base address of array
-    add $t5, $t5, $t1      # Add offset to start of this difficulty section
-    
-check_all_used_loop:
-    beq $t4, 10, check_all_used_done # Checked all 10 questions
-    lb $t6, 0($t5)                   # Load the flag
-    add $t3, $t3, $t6                # Add to used counter
-    addi $t5, $t5, 1                 # Move to next question
-    addi $t4, $t4, 1                 # Increment loop counter
-    j check_all_used_loop
-    
-check_all_used_done:
-    bne $t3, 10, return_random   # If not all used, return
-    
-    # Reset all questions for this difficulty
-    lw $t1, difficulty_level     # Current difficulty (1-3)
-    subi $t1, $t1, 1             # Convert to 0-indexed (0-2)
-    mul $t1, $t1, 10             # Each difficulty has 10 questions (0, 10, 20)
-    
-    li $t4, 0                    # Loop counter
-    la $t5, questions_used       # Base address of array
-    add $t5, $t5, $t1            # Add offset to start of this difficulty section
-    
-reset_questions_loop:
-    beq $t4, 10, return_random   # Reset all 10 questions
-    sb $zero, 0($t5)             # Reset to not used
-    addi $t5, $t5, 1             # Move to next question
-    addi $t4, $t4, 1             # Increment loop counter
-    j reset_questions_loop
-    
-return_random:
-    # Return random value in $v1
-    lw $v1, random_value
+    # Restore return address and return
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
     jr $ra
     
-easy_question:
-    # Display difficulty indicator
+try_another_question:
+    # Try to get another question (recursively)
+    jal generate_random
+    
+    # $v1 is already set from the recursive call
+    # Restore return address and return
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+    jr $ra
+
+#----------------------------------------
+# Check if all questions have been used
+#----------------------------------------
+check_all_questions_used:
+    la $t0, questions_used
+    li $t1, 0          # Counter
+    li $t2, 30         # Total questions
+    li $t3, 0          # Used count
+    
+check_used_loop:
+    beq $t1, $t2, check_used_done
+    lb $t4, 0($t0)     # Load used flag
+    add $t3, $t3, $t4  # Add to used count
+    addi $t0, $t0, 1   # Next question
+    addi $t1, $t1, 1   # Increment counter
+    j check_used_loop
+    
+check_used_done:
+    # If all questions used, $t3 will equal $t2 (30)
+    # Return result in $v0: 1 if all used, 0 otherwise
+    seq $v0, $t3, $t2
+    jr $ra
+
+#----------------------------------------
+# Display question based on its ID
+#----------------------------------------
+display_question:
+    # $s0 contains question ID (1-30)
+    # Questions 1-10 are easy, 11-20 are medium, 21-30 are hard
+    
+    # Display difficulty level text
+    bgt $s0, 20, display_hard_level    # If > 20, it's hard
+    bgt $s0, 10, display_medium_level  # If > 10, it's medium
+    
+    # Easy level (1-10)
+    li $v0, 4
     la $a0, easy_text
     syscall
+    j display_question_content
     
-    # Get a random question number
-    jal generate_random
-    move $t4, $v1    # Random number 1-10
-    
-    beq $t4, 1, easy_q1_display
-    beq $t4, 2, easy_q2_display
-    beq $t4, 3, easy_q3_display
-    beq $t4, 4, easy_q4_display
-    beq $t4, 5, easy_q5_display
-    beq $t4, 6, easy_q6_display
-    beq $t4, 7, easy_q7_display
-    beq $t4, 8, easy_q8_display
-    beq $t4, 9, easy_q9_display
-    beq $t4, 10, easy_q10_display
-    
-    # Default to first question if something went wrong
-    j easy_q1_display
-    
-easy_q1_display:
-    la $a0, easy_q1
-    syscall
-    la $a0, easy_q1_a
-    syscall
-    lb $t5, easy_q1_ans    
-    j get_answer
-    
-easy_q2_display:
-    la $a0, easy_q2
-    syscall
-    la $a0, easy_q2_a
-    syscall
-    lb $t5, easy_q2_ans
-    j get_answer
-    
-easy_q3_display:
-    la $a0, easy_q3
-    syscall
-    la $a0, easy_q3_a
-    syscall
-    lb $t5, easy_q3_ans
-    j get_answer
-    
-easy_q4_display:
-    la $a0, easy_q4
-    syscall
-    la $a0, easy_q4_a
-    syscall
-    lb $t5, easy_q4_ans
-    j get_answer
-
-easy_q5_display:
-    la $a0, easy_q5
-    syscall
-    la $a0, easy_q5_a
-    syscall
-    lb $t5, easy_q5_ans
-    j get_answer
-
-easy_q6_display:
-    la $a0, easy_q6
-    syscall
-    la $a0, easy_q6_a
-    syscall
-    lb $t5, easy_q6_ans
-    j get_answer
-
-easy_q7_display:
-    la $a0, easy_q7
-    syscall
-    la $a0, easy_q7_a
-    syscall
-    lb $t5, easy_q7_ans
-    j get_answer
-
-easy_q8_display:
-    la $a0, easy_q8
-    syscall
-    la $a0, easy_q8_a
-    syscall
-    lb $t5, easy_q8_ans
-    j get_answer
-
-easy_q9_display:
-    la $a0, easy_q9
-    syscall
-    la $a0, easy_q9_a
-    syscall
-    lb $t5, easy_q9_ans
-    j get_answer
-
-easy_q10_display:
-    la $a0, easy_q10
-    syscall
-    la $a0, easy_q10_a
-    syscall
-    lb $t5, easy_q10_ans
-    j get_answer
-    
-medium_question:
-    # Display difficulty indicator
+display_medium_level:
+    li $v0, 4
     la $a0, medium_text
     syscall
+    j display_question_content
     
-    # Get a random question number
-    jal generate_random
-    move $t4, $v1    # Random number 1-10
-    
-    beq $t4, 1, medium_q1_display
-    beq $t4, 2, medium_q2_display
-    beq $t4, 3, medium_q3_display
-    beq $t4, 4, medium_q4_display
-    beq $t4, 5, medium_q5_display
-    beq $t4, 6, medium_q6_display
-    beq $t4, 7, medium_q7_display
-    beq $t4, 8, medium_q8_display
-    beq $t4, 9, medium_q9_display
-    beq $t4, 10, medium_q10_display
-    
-    # Default to first question if something went wrong
-    j medium_q1_display
-    
-medium_q1_display:
-    la $a0, medium_q1
-    syscall
-    la $a0, medium_q1_a
-    syscall
-    lb $t5, medium_q1_ans
-    j get_answer
-    
-medium_q2_display:
-    la $a0, medium_q2
-    syscall
-    la $a0, medium_q2_a
-    syscall
-    lb $t5, medium_q2_ans
-    j get_answer
-    
-medium_q3_display:
-    la $a0, medium_q3
-    syscall
-    la $a0, medium_q3_a
-    syscall
-    lb $t5, medium_q3_ans
-    j get_answer
-    
-medium_q4_display:
-    la $a0, medium_q4
-    syscall
-    la $a0, medium_q4_a
-    syscall
-    lb $t5, medium_q4_ans
-    j get_answer
-
-medium_q5_display:
-    la $a0, medium_q5
-    syscall
-    la $a0, medium_q5_a
-    syscall
-    lb $t5, medium_q5_ans
-    j get_answer
-    
-medium_q6_display:
-    la $a0, medium_q6
-    syscall
-    la $a0, medium_q6_a
-    syscall
-    lb $t5, medium_q6_ans
-    j get_answer
-    
-medium_q7_display:
-    la $a0, medium_q7
-    syscall
-    la $a0, medium_q7_a
-    syscall
-    lb $t5, medium_q7_ans
-    j get_answer
-    
-medium_q8_display:
-    la $a0, medium_q8
-    syscall
-    la $a0, medium_q8_a
-    syscall
-    lb $t5, medium_q8_ans
-    j get_answer
-    
-medium_q9_display:
-    la $a0, medium_q9
-    syscall
-    la $a0, medium_q9_a
-    syscall
-    lb $t5, medium_q9_ans
-    j get_answer
-    
-medium_q10_display:
-    la $a0, medium_q10
-    syscall
-    la $a0, medium_q10_a
-    syscall
-    lb $t5, medium_q10_ans
-    j get_answer
-    
-hard_question:
-    # Display difficulty indicator
+display_hard_level:
+    li $v0, 4
     la $a0, hard_text
     syscall
     
-    # Get a random question number
-    jal generate_random
-    move $t4, $v1    # Random number 1-10
+display_question_content:
+    # Use table lookup to get question text and options
+    addi $t0, $s0, -1      # Convert 1-based to 0-based index
+    sll $t0, $t0, 2        # Multiply by 4 for word offset
     
-    beq $t4, 1, hard_q1_display
-    beq $t4, 2, hard_q2_display
-    beq $t4, 3, hard_q3_display
-    beq $t4, 4, hard_q4_display
-    beq $t4, 5, hard_q5_display
-    beq $t4, 6, hard_q6_display
-    beq $t4, 7, hard_q7_display
-    beq $t4, 8, hard_q8_display
-    beq $t4, 9, hard_q9_display
-    beq $t4, 10, hard_q10_display
+    # Load question text
+    la $t1, question_table
+    add $t1, $t1, $t0
+    lw $a0, 0($t1)
+    li $v0, 4
+    syscall
     
-    # Default to first question if something went wrong
-    j hard_q1_display
+    # Load question options
+    la $t1, question_options
+    add $t1, $t1, $t0
+    lw $a0, 0($t1)
+    li $v0, 4
+    syscall
     
-hard_q1_display:
-    la $a0, hard_q1
-    syscall
-    la $a0, hard_q1_a
-    syscall
-    lb $t5, hard_q1_ans
-    j get_answer
+    # Load correct answer - FIXED CODE
+    addi $t0, $s0, -1      # Convert to 0-based index
+    la $t1, question_answers
+    add $t1, $t1, $t0      # Simply add offset for byte array
+    lb $s1, 0($t1)         # Load correct answer into $s1
     
-hard_q2_display:
-    la $a0, hard_q2
-    syscall
-    la $a0, hard_q2_a
-    syscall
-    lb $t5, hard_q2_ans
-    j get_answer
-    
-hard_q3_display:
-    la $a0, hard_q3
-    syscall
-    la $a0, hard_q3_a
-    syscall
-    lb $t5, hard_q3_ans
-    j get_answer
-    
-hard_q4_display:
-    la $a0, hard_q4
-    syscall
-    la $a0, hard_q4_a
-    syscall
-    lb $t5, hard_q4_ans
-    j get_answer
-    
-hard_q5_display:
-    la $a0, hard_q5
-    syscall
-    la $a0, hard_q5_a
-    syscall
-    lb $t5, hard_q5_ans
-    j get_answer
-    
-hard_q6_display:
-    la $a0, hard_q6
-    syscall
-    la $a0, hard_q6_a
-    syscall
-    lb $t5, hard_q6_ans
-    j get_answer
-    
-hard_q7_display:
-    la $a0, hard_q7
-    syscall
-    la $a0, hard_q7_a
-    syscall
-    lb $t5, hard_q7_ans
-    j get_answer
-    
-hard_q8_display:
-    la $a0, hard_q8
-    syscall
-    la $a0, hard_q8_a
-    syscall
-    lb $t5, hard_q8_ans
-    j get_answer
+    jr $ra
 
-hard_q9_display:
-    la $a0, hard_q9
-    syscall
-    la $a0, hard_q9_a
-    syscall
-    lb $t5, hard_q9_ans
-    j get_answer
-    
-hard_q10_display:
-    la $a0, hard_q10
-    syscall
-    la $a0, hard_q10_a
-    syscall
-    lb $t5, hard_q10_ans
-    j get_answer
-    
-get_answer:
+#----------------------------------------
+# Get user answer and check if correct
+#----------------------------------------
+get_and_check_answer:
     # Prompt for user input
     li $v0, 4
     la $a0, answer_prompt
@@ -656,14 +484,14 @@ get_answer:
     lb $t6, 0($a0)
     
     # Convert lowercase to uppercase if needed
-    blt $t6, 'a', check_answer  # If less than 'a', it's already uppercase or invalid
-    bgt $t6, 'z', check_answer  # If greater than 'z', it's invalid
+    blt $t6, 'a', skip_conversion  # If less than 'a', it's already uppercase or invalid
+    bgt $t6, 'z', skip_conversion  # If greater than 'z', it's invalid
     
     # Convert to uppercase by subtracting 32
     subi $t6, $t6, 32
     
-check_answer:
-    beq $t6, $t5, correct_answer
+skip_conversion:
+    beq $t6, $s1, answer_correct
     
     # Handle incorrect answer
     li $v0, 4
@@ -672,51 +500,32 @@ check_answer:
     
     # Display correct answer
     li $v0, 11
-    move $a0, $t5
+    move $a0, $s1
     syscall
     
     li $v0, 4
     la $a0, newline_msg
     syscall
     
-    # Decrease difficulty if not already at easiest
-    lw $t7, difficulty_level
-    beq $t7, 1, skip_difficulty_decrease  # Already at easiest
-    subi $t7, $t7, 1
-    sw $t7, difficulty_level
+    jr $ra
     
-skip_difficulty_decrease:
-    # Decrease score if not already at 0
-    lw $t7, current_score
-    beq $t7, 0, skip_score_decrease  # Already at 0
-    subi $t7, $t7, 1
-    sw $t7, current_score
-    
-skip_score_decrease:
-    j next_problem
-    
-correct_answer:
+answer_correct:
     # Display correct message
     li $v0, 4
     la $a0, correct_msg
     syscall
     
-    # Increase difficulty if not already at hardest
-    lw $t7, difficulty_level
-    bge $t7, 3, skip_difficulty_increase  # Already at hardest
-    addi $t7, $t7, 1
-    sw $t7, difficulty_level
-    
-skip_difficulty_increase:
-    # Increase score
+    # Increment score
     lw $t7, current_score
     addi $t7, $t7, 1
     sw $t7, current_score
     
-    # Check if player reached winning score
-    bge $t7, 10, game_win
-    
-next_problem:
+    jr $ra
+
+#----------------------------------------
+# Display current score
+#----------------------------------------
+display_current_score:
     # Display current score
     li $v0, 4
     la $a0, score_msg_display
@@ -727,6 +536,14 @@ next_problem:
     syscall
     
     li $v0, 4
+    la $a0, out_of_msg
+    syscall
+    
+    li $v0, 1
+    lw $a0, total_questions
+    syscall
+ 
+    li $v0, 4
     la $a0, newline_msg
     syscall
     
@@ -735,20 +552,11 @@ next_problem:
     la $a0, continue_prompt
     syscall
     
-    # Wait for user to press Enter
-    li $v0, 8
-    la $a0, input_buffer
-    li $a1, 5
-    syscall
-    
-    j game_loop
+    jr $ra
 
-game_win:
-    li $v0, 4
-    la $a0, excellent_msg
-    syscall
-    j end_game
-    
+#----------------------------------------
+# End game and display final results
+#----------------------------------------
 end_game:
     # Display game over message
     li $v0, 4
@@ -756,7 +564,6 @@ end_game:
     syscall
     
     # Display final score
-    li $v0, 4
     la $a0, final_score_msg
     syscall
     
@@ -776,42 +583,42 @@ end_game:
     la $a0, newline_msg
     syscall
     
-    # Performance evaluation
-    li $v0, 4
+    # Performance evaluation based on score
     la $a0, performance_msg
     syscall
     
-    # Calculate percentage
+    # Calculate percentage score
     lw $t0, current_score
+    mul $t0, $t0, 100       # Multiply by 100 for percentage
     lw $t1, max_questions
-    mul $t0, $t0, 100
-    div $t0, $t1
-    mflo $t2    # Percentage in $t2
+    div $t0, $t1            # Divide by max questions
+    mflo $t0                # Get quotient of division
     
-    # Branch based on performance
-    bge $t2, 90, excellent_performance
-    bge $t2, 70, good_performance
-    bge $t2, 50, average_performance
-    j poor_performance
+    # Select performance message based on score percentage
+    bge $t0, 90, excellent_perf    # 90% or above
+    bge $t0, 70, good_perf         # 70-89%
+    bge $t0, 50, average_perf      # 50-69%
+    j poor_perf                     # Below 50%
     
-excellent_performance:
+excellent_perf:
     la $a0, excellent_msg
     j display_performance
     
-good_performance:
+good_perf:
     la $a0, good_msg
     j display_performance
     
-average_performance:
+average_perf:
     la $a0, average_msg
     j display_performance
     
-poor_performance:
+poor_perf:
     la $a0, poor_msg
     
 display_performance:
+    li $v0, 4
     syscall
     
-exit_game:
-    li $v0, 10  # Exit program
+    # Exit program
+    li $v0, 10
     syscall
